@@ -14,7 +14,14 @@ namespace PlantDiary2022FS001.Pages
 
         public void OnGet()
         {
-
+            string inBrand = Request.Query["Brand"];
+            string brand = "My Plant Diary";
+            if (inBrand != null && inBrand.Length >0)
+            {
+                brand = inBrand;
+            }
+            int yearStarted = 2006;
+            ViewData["Brand"] = brand + " Year Started " + yearStarted;
         }
     }
 }
