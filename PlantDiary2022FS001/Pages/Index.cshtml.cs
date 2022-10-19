@@ -20,8 +20,7 @@ namespace PlantDiary2022FS001.Pages
             {
                 brand = inBrand;
             }
-            int yearStarted = 2006;
-            ViewData["Brand"] = brand + " Year Started " + yearStarted;
+            ViewData["Brand"] = brand;
         }
     }
 }
