@@ -12,3 +12,6 @@ Do you remember where you planted the apple treee?  Do you know when to water an
 
 ## Data Sources
 [Plant Places](http://www.plantplaces.com/perl/mobile/viewplantsjson.pl?Combined_Name=)
+
+## Storyboard
+![The user interface for my application](https://raw.githubusercontent.com/discospiff/PlantDiary2022FS001/master/Storyboard.png)
