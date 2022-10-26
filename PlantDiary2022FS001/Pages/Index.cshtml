@@ -5,13 +5,14 @@
     ViewData["Title"] = "Home page";
     var brand = ViewData["Brand"];
     List<Specimen> specimens = (List<Specimen>)ViewData["Specimens"];
+    var message = ViewData["Message"];
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome to @brand</h1>
     <p>Catalog your plants, where tehy are, when they have been watered and fertilized.</a>.</p>
     <p>We're glad you are here!</p>
-
+    <span>@message</span>
     <table>
         <tr>
             <th>Plant ID</th>

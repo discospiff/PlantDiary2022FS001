@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PlantPlacesPlants;
 using PlantPlacesSpecimens;
+using PlantPlacesWeather;
 
 namespace PlantDiary2022FS001.Pages
 {
@@ -30,7 +31,7 @@ namespace PlantDiary2022FS001.Pages
 
         }
 
-        private void GetData()
+        private async void GetData()
         {
             // get plant specimens at this location.
             var task = client.GetAsync("http://plantplaces.com/perl/mobile/specimenlocations.pl?Lat=39.14455&Lng=-84.50939&Range=0.5&Source=location");
@@ -64,6 +65,27 @@ namespace PlantDiary2022FS001.Pages
                 }
             }
             ViewData["Specimens"] = waterLovingSpecimens;
+
+            // read in weather data for our locale.
+            String weatherEndpoint = "https://api.weatherbit.io/v2.0/current?&city=Cincinnati&country=USA&key=";
+            Task<HttpResponseMessage> weatherTask = client.GetAsync(weatherEndpoint);
+            HttpResponseMessage weatherResult = await weatherTask;
+            Task<string> weatherTaskString = weatherResult.Content.ReadAsStringAsync();
+            string weatherJson = weatherTaskString.Result;
+
+            double precip = 0;
+            Weather weather = Weather.FromJson(weatherJson);
+            foreach (Datum weatherDatum in weather.Data)
+            {
+                precip = weatherDatum.Precip;
+            }
+            if (precip < 0.5)
+            {
+                ViewData["Message"] = "It's dry!  Water plants.";
+            } else
+            {
+                ViewData["Message"] = "Rain expected.  No need to water.";
+            }
         }
     }
 }
