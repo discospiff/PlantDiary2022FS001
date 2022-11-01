@@ -9,6 +9,7 @@ namespace PlantDiary2022FS001.Pages
 {
     public class IndexModel : PageModel
     {
+        private const double PRECIPITAION_THRESHOLD = 0.5;
         static readonly HttpClient client = new HttpClient();
 
         private readonly ILogger<IndexModel> _logger;
@@ -20,6 +21,16 @@ namespace PlantDiary2022FS001.Pages
 
         public void OnGet()
         {
+            GenerateBrand();
+
+            Task<List<Specimen>> task = GetData();
+            List<Specimen> waterLovingSpecimens = task.Result;
+            ViewData["Specimens"] = waterLovingSpecimens;
+
+        }
+
+        private void GenerateBrand()
+        {
             string inBrand = Request.Query["Brand"];
             string brand = "My Plant Diary";
             if (inBrand != null && inBrand.Length > 0)
@@ -27,11 +38,6 @@ namespace PlantDiary2022FS001.Pages
                 brand = inBrand;
             }
             ViewData["Brand"] = brand;
-
-            Task<List<Specimen>> task = GetData();
-            List<Specimen> waterLovingSpecimens = task.Result;
-            ViewData["Specimens"] = waterLovingSpecimens;
-
         }
 
         private async Task<List<Specimen>> GetData()
@@ -40,6 +46,11 @@ namespace PlantDiary2022FS001.Pages
             {
                 // get plant specimens at this location.
                 var task = client.GetAsync("http://plantplaces.com/perl/mobile/specimenlocations.pl?Lat=39.14455&Lng=-84.50939&Range=0.5&Source=location");
+                Task<HttpResponseMessage> plantTask = client.GetAsync("http://plantplaces.com/perl/mobile/viewplantsjsonarray.pl?WetTolerant=on");
+
+                String weatherEndpoint = "https://api.weatherbit.io/v2.0/current?&city=Cincinnati&country=USA&key=" + apiKey;
+                Task<HttpResponseMessage> weatherTask = client.GetAsync(weatherEndpoint);
+
                 HttpResponseMessage result = task.Result;
                 result.EnsureSuccessStatusCode();
                 Task<string> readString = result.Content.ReadAsStringAsync();
@@ -48,7 +59,6 @@ namespace PlantDiary2022FS001.Pages
 
 
                 // get the data for water loving plants.
-                Task<HttpResponseMessage> plantTask = client.GetAsync("http://plantplaces.com/perl/mobile/viewplantsjsonarray.pl?WetTolerant=on");
                 HttpResponseMessage plantResult = plantTask.Result;
                 Task<string> plantTaskString = plantResult.Content.ReadAsStringAsync();
                 string plantJson = plantTaskString.Result;
@@ -79,8 +89,6 @@ namespace PlantDiary2022FS001.Pages
                 string apiKey = config["weatherapikey"];
 
                 // read in weather data for our locale.
-                String weatherEndpoint = "https://api.weatherbit.io/v2.0/current?&city=Cincinnati&country=USA&key=" + apiKey;
-                Task<HttpResponseMessage> weatherTask = client.GetAsync(weatherEndpoint);
                 HttpResponseMessage weatherResult = await weatherTask;
                 Task<string> weatherTaskString = weatherResult.Content.ReadAsStringAsync();
                 string weatherJson = weatherTaskString.Result;
@@ -91,7 +99,7 @@ namespace PlantDiary2022FS001.Pages
                 {
                     precip = weatherDatum.Precip;
                 }
-                if (precip < 0.5)
+                if (precip < PRECIPITAION_THRESHOLD)
                 {
                     ViewData["Message"] = "It's dry!  Water plants.";
                 }
