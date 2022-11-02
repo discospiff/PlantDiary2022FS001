@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 using PlantPlacesPlants;
 using PlantPlacesSpecimens;
 using PlantPlacesWeather;
@@ -48,6 +50,13 @@ namespace PlantDiary2022FS001.Pages
                 var task = client.GetAsync("http://plantplaces.com/perl/mobile/specimenlocations.pl?Lat=39.14455&Lng=-84.50939&Range=0.5&Source=location");
                 Task<HttpResponseMessage> plantTask = client.GetAsync("http://plantplaces.com/perl/mobile/viewplantsjsonarray.pl?WetTolerant=on");
 
+                // grab our API key from THE SECRET STORE
+                var config = new ConfigurationBuilder()
+                    .AddUserSecrets<Program>()
+                    .Build();
+
+                string apiKey = config["weatherapikey"];
+
                 String weatherEndpoint = "https://api.weatherbit.io/v2.0/current?&city=Cincinnati&country=USA&key=" + apiKey;
                 Task<HttpResponseMessage> weatherTask = client.GetAsync(weatherEndpoint);
 
@@ -55,8 +64,30 @@ namespace PlantDiary2022FS001.Pages
                 result.EnsureSuccessStatusCode();
                 Task<string> readString = result.Content.ReadAsStringAsync();
                 string jsonString = readString.Result;
-                List<Specimen> specimens = Specimen.FromJson(jsonString);
 
+                // read in the schema for specimens, so we can validate them.
+                string specimenSchema = System.IO.File.ReadAllText("specimen-schema.json");
+                JSchema schema = JSchema.Parse(specimenSchema);
+
+                // Parse our JSON against the schema.
+                JArray jsonObject = JArray.Parse(jsonString);
+
+                // this collection will hold any errors that occur when parsing the JSON against the schema.
+                IList<string> validationEvents  = new List<string>();
+
+                List<Specimen> specimens = new List<Specimen>();
+                if (jsonObject.IsValid(schema, out validationEvents))
+                {
+                  specimens = Specimen.FromJson(jsonString);
+                } 
+                else
+                {
+                    foreach (var validationEvent in validationEvents)
+                    {
+                        ViewData["Error"] = ViewData["Error"] + validationEvent;
+                    }
+                    return specimens;
+                }
 
                 // get the data for water loving plants.
                 HttpResponseMessage plantResult = plantTask.Result;
@@ -79,14 +110,6 @@ namespace PlantDiary2022FS001.Pages
                         waterLovingSpecimens.Add(specimen);
                     }
                 }
-                
-
-                // grab our API key from THE SECRET STORE
-                var config = new ConfigurationBuilder()
-                    .AddUserSecrets<Program>()
-                    .Build();
-
-                string apiKey = config["weatherapikey"];
 
                 // read in weather data for our locale.
                 HttpResponseMessage weatherResult = await weatherTask;
@@ -96,8 +119,9 @@ namespace PlantDiary2022FS001.Pages
                 double precip = 0;
                 Weather weather = Weather.FromJson(weatherJson);
                 foreach (Datum weatherDatum in weather.Data)
-                {
+                { 
                     precip = weatherDatum.Precip;
+                 
                 }
                 if (precip < PRECIPITAION_THRESHOLD)
                 {
@@ -107,6 +131,7 @@ namespace PlantDiary2022FS001.Pages
                 {
                     ViewData["Message"] = "Rain expected.  No need to water.";
                 }
+
                 return waterLovingSpecimens;
             });
         }

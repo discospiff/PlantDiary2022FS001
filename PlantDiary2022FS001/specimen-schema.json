@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/WeatherElement"
+  },
+  "definitions": {
+    "WeatherElement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lat": {
+          "type": "number",
+          "description": "The latitude of this specimen",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "lng": {
+          "type": "number",
+          "description": "Longitude",
+          "minimum": -150,
+          "maximum": 150
+            
+        },
+        "plant_id": {
+          "type": "integer",
+          "description": "Foreign key to plant data",
+          "minimum": 0
+
+        },
+        "specimen_id": {
+          "type": "integer",
+          "minimum": 0
+           
+        },
+        "common": {
+          "type": "string"
+        },
+        "genus": {
+          "type": "string",
+          "maxLength": 60
+
+        },
+        "species": {
+          "type": "string",
+          "maxLength": 255
+
+        },
+        "address": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "address",
+        "genus",
+        "lat",
+        "lng",
+        "plant_id",
+        "species",
+        "specimen_id"
+      ],
+      "title": "WeatherElement"
+    }
+  }
+}
