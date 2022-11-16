@@ -1,0 +1,11 @@
+﻿body {
+    background-color: white;
+}
+
+#topnav {
+    display:none;
+}
+
+#content {
+    position:relative;
+}
